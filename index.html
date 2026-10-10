@@ -4,114 +4,143 @@
 <meta charset="UTF-8">
 <title>SCLC Systems Architecture — HotDoc / Helix / Tyro / Stripe</title>
 <style>
-  @page { size: A4 landscape; margin: 10mm; }
+  @page { size: A4 landscape; margin: 8mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Helvetica Neue", Arial, "PingFang SC", sans-serif; color: #1a1a2e; font-size: 10px; }
-  .page { page-break-after: always; padding: 6mm; }
+  :root {
+    --navy: #0d3b4f; --gold: #c79323; --green: #17a05e;
+    --red: #d64541; --purple: #635bff; --blue: #4a90d9;
+    --ink: #16303d; --muted: #5f7482; --line: #dbe4ea;
+    --bg-soft: #f4f8fa;
+  }
+  body { font-family: "Helvetica Neue", Arial, "PingFang SC", sans-serif; color: var(--ink); font-size: 10px; }
+  .page { page-break-after: always; padding: 5mm 7mm; position: relative; }
   .page:last-child { page-break-after: auto; }
   .page, .diagram, table, .note, h2 { break-inside: avoid; }
   table { break-inside: auto; }
   tr { break-inside: avoid; }
-  h1 { font-size: 20px; color: #0d3b4f; border-bottom: 3px solid #c79323; padding-bottom: 6px; margin-bottom: 4px; }
-  .subtitle { font-size: 10px; color: #666; margin-bottom: 10px; }
-  h2 { font-size: 14px; color: #0d3b4f; margin: 8px 0 6px; padding-left: 8px; border-left: 4px solid #c79323; }
 
-  /* ---------- diagram primitives ---------- */
-  .diagram { position: relative; background: #f7f9fb; border: 1px solid #dde4ea; border-radius: 8px; padding: 12px 10px; }
-  .box { border-radius: 8px; padding: 8px 10px; text-align: center; font-weight: 600; }
-  .box .role { font-weight: 400; font-size: 8.5px; margin-top: 3px; line-height: 1.35; }
-  .helix    { background: #0d3b4f; color: #fff; }
-  .hotdoc   { background: #17a05e; color: #fff; }
-  .website  { background: #c79323; color: #fff; }
-  .tempbk   { background: #8a6fc1; color: #fff; }
-  .tyro     { background: #d64541; color: #fff; }
-  .stripe   { background: #635bff; color: #fff; }
-  .patient  { background: #4a90d9; color: #fff; }
-  .google   { background: #ea8c00; color: #fff; }
-  .neutral  { background: #fff; color: #1a1a2e; border: 1.5px dashed #999; }
+  /* ===== header band (every page) ===== */
+  .band { display: flex; align-items: center; justify-content: space-between;
+          background: linear-gradient(90deg, var(--navy) 0%, #14506b 70%, #1d6b8a 100%);
+          border-radius: 10px; padding: 10px 18px; margin-bottom: 10px; }
+  .band .t1 { color: #fff; font-size: 16.5px; font-weight: 800; letter-spacing: .3px; }
+  .band .t2 { color: #a8cddd; font-size: 8.5px; margin-top: 2px; }
+  .band .chip { background: var(--gold); color: #fff; font-size: 9px; font-weight: 800;
+                padding: 4px 12px; border-radius: 14px; white-space: nowrap; }
 
+  h2 { font-size: 13.5px; color: var(--navy); margin: 7px 0 5px; padding-left: 9px;
+       border-left: 4px solid var(--gold); display: flex; align-items: baseline; gap: 8px; }
+  h2 small { font-size: 9px; color: var(--muted); font-weight: 400; }
+
+  /* ===== diagram card ===== */
+  .diagram { background: linear-gradient(180deg, #fbfdfe 0%, #f1f6f9 100%);
+             border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
   svg { display: block; }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-size: 8.5px; color: #444; }
-  .legend span b { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 
-  table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; }
-  th { background: #0d3b4f; color: #fff; padding: 5px 7px; text-align: left; font-size: 9.5px; }
-  td { border: 1px solid #d5dde3; padding: 4.5px 7px; font-size: 9px; vertical-align: top; }
-  tr:nth-child(even) td { background: #f2f6f9; }
-  .tag { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 8px; font-weight: 700; color: #fff; }
-  .t-now  { background: #17a05e; }
-  .t-later{ background: #d64541; }
-  .t-both { background: #635bff; }
-  .t-wait { background: #999; }
-  .note { background: #fff8e6; border: 1px solid #e8d48b; border-radius: 6px; padding: 6px 9px; font-size: 9px; margin: 6px 0; }
-  .footer-note { margin-top: 6px; font-size: 8px; color: #888; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 7px; font-size: 8px; color: #445; }
+  .legend span b { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 
-  /* pagination fix v2: compact page 2/3 so nothing spills */
-  .page:nth-of-type(2) .diagram { padding: 6px 8px; }
-  .page:nth-of-type(2) svg { max-height: 158px; }
-  .page:nth-of-type(2) td, .page:nth-of-type(2) th { padding: 3.5px 6px; font-size: 8.5px; }
-  .page:nth-of-type(2) h2 { margin: 5px 0 4px; font-size: 13px; }
-  .page:nth-of-type(2) .note { padding: 4px 8px; font-size: 8.5px; margin: 4px 0; }
-  .page:nth-of-type(3) table td, .page:nth-of-type(3) table th { padding: 4px 6px; font-size: 8.6px; }
-  .page:nth-of-type(3) h2 { margin: 5px 0 4px; font-size: 13px; }
-  .page:nth-of-type(3) .diagram svg { max-height: 240px; }
-  .page:nth-of-type(3) .note { padding: 4px 8px; font-size: 8.5px; margin: 4px 0; }
-  .page:nth-of-type(3) .footer-note { margin-top: 4px; font-size: 7.5px; }
+  /* ===== tables ===== */
+  table { width: 100%; border-collapse: collapse; margin: 5px 0 8px; border-radius: 8px; overflow: hidden; }
+  th { background: var(--navy); color: #fff; padding: 5px 7px; text-align: left; font-size: 9px; letter-spacing: .2px; }
+  td { border: 1px solid var(--line); padding: 4px 7px; font-size: 8.6px; vertical-align: top; background: #fff; }
+  tr:nth-child(even) td { background: #f6f9fb; }
+  td b { color: var(--navy); }
+
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 7.8px; font-weight: 800; color: #fff; letter-spacing: .3px; }
+  .t-now  { background: var(--green); }
+  .t-later{ background: var(--red); }
+  .t-both { background: var(--purple); }
+  .t-wait { background: #8fa3ae; }
+
+  .note { background: linear-gradient(90deg, #fff8e6, #fffdf4); border: 1px solid #ecd9a0;
+          border-left: 4px solid var(--gold); border-radius: 8px; padding: 6px 10px; font-size: 8.8px; margin: 6px 0; }
+  .note b { color: #7a5b12; }
+  .footer-note { margin-top: 5px; font-size: 7.6px; color: #93a5ae; display: flex; justify-content: space-between; }
+
+  /* pagination compaction (keep 3 pages) */
+  .page:nth-of-type(2) .diagram { padding: 5px 7px; }
+  .page:nth-of-type(2) svg { max-height: 150px; }
+  .page:nth-of-type(2) td, .page:nth-of-type(2) th { padding: 3.2px 6px; font-size: 8.4px; }
+  .page:nth-of-type(2) h2 { margin: 4px 0 3px; }
+  .page:nth-of-type(2) .note { padding: 4px 9px; font-size: 8.4px; margin: 3px 0; }
+  .page:nth-of-type(3) svg { max-height: 225px; }
+  .page:nth-of-type(3) table td, .page:nth-of-type(3) table th { padding: 3.6px 6px; font-size: 8.4px; }
+  .page:nth-of-type(3) .note { padding: 4px 9px; font-size: 8.4px; margin: 4px 0; }
+  .page:nth-of-type(3) .footer-note { margin-top: 3px; }
+
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+  /* ==== browser view mode ==== */
+  .page { page-break-after: auto; margin-bottom: 24px; box-shadow: 0 3px 16px rgba(0,0,0,.10); border-radius: 12px; background: #fff; }
+  .diagram { transition: box-shadow .2s; }
+  .diagram:hover { box-shadow: 0 4px 20px rgba(13,59,79,.14); }
+  body { background: #dfe7ec; padding: 22px; max-width: 1300px; margin: 0 auto; }
+  .view-nav { position: sticky; top: 0; z-index: 99; background: #0d3b4f; border-radius: 10px; padding: 11px 18px; margin-bottom: 20px; display: flex; gap: 16px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  .view-nav a { color: #fff; text-decoration: none; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 6px; transition: background .15s; }
+  .view-nav a:hover { background: #c79323; }
+  .view-nav .brand { font-weight: 800; color: #c79323; margin-right: auto; font-size: 13px; }
+  @media print { .view-nav { display: none; } body { background: #fff; padding: 0; max-width: none; } .page { box-shadow: none; border-radius: 0; margin: 0; } }
 </style>
 </head>
-<body>
+<body id="top">
+<div class="view-nav">
+  <span class="brand">SCLC Systems Map · v1.1</span>
+  <a href="#p1">1 · Architecture</a>
+  <a href="#p2">2 · Flows</a>
+  <a href="#p3">3 · Marketing &amp; Ownership</a>
+  <a href="sclc-systems-architecture.pdf" style="background:#c79323">↓ Download PDF</a>
+</div>
+
+
 
 <!-- ============================ PAGE 1 : SYSTEM MAP ============================ -->
-<div class="page">
-  <h1>SKIN CANCER LASER CENTRE — Systems Architecture Map</h1>
-  <div class="subtitle">HotDoc · Helix · Tyro · Stripe · Website &nbsp;|&nbsp; prepared by SnailAI.AI for Dr Andrew Li &amp; Omid Zarbaft &nbsp;|&nbsp; v1.1 — 11 Oct 2026 (adds HotDoc patient app entry)</div>
+<div class="page" id="p1">
+  <div class="band">
+    <div>
+      <div class="t1">SKIN CANCER LASER CENTRE — Systems Architecture</div>
+      <div class="t2">HotDoc · Helix · Tyro · Stripe · Website &nbsp;|&nbsp; prepared by SnailAI.AI for Dr Andrew Li &amp; Omid Zarbaft</div>
+    </div>
+    <div class="chip">v1.1 · 11 OCT 2026</div>
+  </div>
 
   <div class="diagram">
-    <svg viewBox="0 0 1160 430" width="100%">
+    <svg viewBox="0 0 1160 440" width="100%">
       <defs>
-        <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#555"/></marker>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#55606a"/></marker>
         <marker id="ar-g" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#17a05e"/></marker>
         <marker id="ar-r" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#d64541"/></marker>
         <marker id="ar-p" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#635bff"/></marker>
       </defs>
 
       <!-- Patient -->
-      <rect x="10" y="165" width="120" height="80" rx="10" fill="#4a90d9"/>
+      <rect x="10" y="165" width="120" height="80" rx="12" fill="#4a90d9"/>
       <text x="70" y="198" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">PATIENT</text>
       <text x="70" y="216" text-anchor="middle" fill="#dbeafd" font-size="8.5">Books / pays online</text>
       <text x="70" y="228" text-anchor="middle" fill="#dbeafd" font-size="8.5">or pays at front desk</text>
 
-      <!-- HotDoc App (patient-side 4th entry) -->
-      <rect x="420" y="310" width="180" height="88" rx="10" fill="#17a05e" opacity="0.92"/>
-      <text x="510" y="334" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">HOTDOC PATIENT APP</text>
-      <text x="510" y="350" text-anchor="middle" fill="#d9f5e7" font-size="8.5">iOS App Store · Android Google Play</text>
-      <text x="510" y="364" text-anchor="middle" fill="#d9f5e7" font-size="8.5">book · reminders · check-in · queue</text>
-      <text x="510" y="376" text-anchor="middle" fill="#d9f5e7" font-size="8.5">cancel / reschedule · new patient form</text>
-      <text x="510" y="390" text-anchor="middle" fill="#d9f5e7" font-size="8">4 booking entries: clinic widget · HotDoc web ·</text>
-      <text x="510" y="395" text-anchor="middle" fill="#d9f5e7" font-size="8" opacity="0">.</text>
-
       <!-- Website -->
-      <rect x="185" y="120" width="165" height="170" rx="10" fill="#c79323"/>
+      <rect x="185" y="120" width="165" height="170" rx="12" fill="#c79323"/>
       <text x="267" y="148" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">WEBSITE</text>
       <text x="267" y="164" text-anchor="middle" fill="#fff7e0" font-size="8.5">andrew-clinic.onrender.com</text>
       <line x1="200" y1="176" x2="335" y2="176" stroke="#fff7e0" stroke-width="0.7"/>
       <text x="267" y="192" text-anchor="middle" fill="#fff7e0" font-size="8.5">appointment.html</text>
       <text x="267" y="206" text-anchor="middle" fill="#fff7e0" font-size="8.5">[A] Temp booking form</text>
-      <text x="267" y="222" text-anchor="middle" fill="#fff7e0" font-size="8.5">(own system — in use</text>
-      <text x="267" y="234" text-anchor="middle" fill="#fff7e0" font-size="8.5">until Helix go-live)</text>
-      <text x="267" y="254" text-anchor="middle" fill="#fff7e0" font-size="8.5">[B] HotDoc widget</text>
-      <text x="267" y="266" text-anchor="middle" fill="#fff7e0" font-size="8.5">(iframe — code ready,</text>
-      <text x="267" y="278" text-anchor="middle" fill="#fff7e0" font-size="8.5">install at go-live)</text>
+      <text x="267" y="218" text-anchor="middle" fill="#fff7e0" font-size="8.5">(own system — in use</text>
+      <text x="267" y="230" text-anchor="middle" fill="#fff7e0" font-size="8.5">until Helix go-live)</text>
+      <text x="267" y="250" text-anchor="middle" fill="#fff7e0" font-size="8.5">[B] HotDoc widget</text>
+      <text x="267" y="262" text-anchor="middle" fill="#fff7e0" font-size="8.5">(iframe — code ready,</text>
+      <text x="267" y="274" text-anchor="middle" fill="#fff7e0" font-size="8.5">install at go-live)</text>
 
       <!-- Temp booking backend -->
-      <rect x="185" y="322" width="165" height="64" rx="8" fill="#8a6fc1"/>
+      <rect x="185" y="322" width="165" height="64" rx="10" fill="#8a6fc1"/>
       <text x="267" y="344" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="700">TEMP BOOKING SYSTEM</text>
       <text x="267" y="358" text-anchor="middle" fill="#ede7f8" font-size="8">booking.py + admin dashboard</text>
       <text x="267" y="370" text-anchor="middle" fill="#ede7f8" font-size="8">emails Robin/clinic · retire after</text>
       <text x="267" y="381" text-anchor="middle" fill="#ede7f8" font-size="8">HotDoc runs 1–2 weeks stable</text>
 
       <!-- HotDoc -->
-      <rect x="420" y="120" width="180" height="170" rx="10" fill="#17a05e"/>
+      <rect x="420" y="120" width="180" height="170" rx="12" fill="#17a05e"/>
       <text x="510" y="148" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">HOTDOC</text>
       <text x="510" y="164" text-anchor="middle" fill="#d9f5e7" font-size="8.5">dashboard.hotdoc.com.au</text>
       <line x1="435" y1="176" x2="585" y2="176" stroke="#d9f5e7" stroke-width="0.7"/>
@@ -124,7 +153,7 @@
       <text x="510" y="276" text-anchor="middle" fill="#d9f5e7" font-size="8.5">+ robin@snailai.ai</text>
 
       <!-- Helix -->
-      <rect x="670" y="110" width="185" height="190" rx="10" fill="#0d3b4f"/>
+      <rect x="670" y="110" width="185" height="190" rx="12" fill="#0d3b4f"/>
       <text x="762" y="140" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">HELIX (Telstra Health)</text>
       <text x="762" y="156" text-anchor="middle" fill="#cfe3ec" font-size="8.5">sclc.helix.medicaldirector.com</text>
       <text x="762" y="168" text-anchor="middle" fill="#cfe3ec" font-size="8.5">Centre ID MD28231 · UAT now</text>
@@ -139,7 +168,7 @@
       <text x="762" y="292" text-anchor="middle" fill="#ffd98e" font-size="8">UAT done → training session → go-live</text>
 
       <!-- Tyro -->
-      <rect x="930" y="105" width="200" height="115" rx="10" fill="#d64541"/>
+      <rect x="930" y="105" width="200" height="115" rx="12" fill="#d64541"/>
       <text x="1030" y="132" text-anchor="middle" fill="#fff" font-size="12.5" font-weight="700">TYRO (in-clinic EFTPOS)</text>
       <line x1="945" y1="144" x2="1115" y2="144" stroke="#fadbd8" stroke-width="0.7"/>
       <text x="1030" y="160" text-anchor="middle" fill="#fadbd8" font-size="8.5">Front-desk card payments</text>
@@ -149,7 +178,7 @@
       <text x="1030" y="208" text-anchor="middle" fill="#fadbd8" font-size="8.5">Application underway (Beard)</text>
 
       <!-- Stripe -->
-      <rect x="930" y="250" width="200" height="105" rx="10" fill="#635bff"/>
+      <rect x="930" y="250" width="200" height="105" rx="12" fill="#635bff"/>
       <text x="1030" y="277" text-anchor="middle" fill="#fff" font-size="12.5" font-weight="700">STRIPE (via HotDoc Payments)</text>
       <line x1="945" y1="289" x2="1115" y2="289" stroke="#e3e1fc" stroke-width="0.7"/>
       <text x="1030" y="305" text-anchor="middle" fill="#e3e1fc" font-size="8.5">Online deposits / prepayments</text>
@@ -158,8 +187,16 @@
       <text x="1030" y="341" text-anchor="middle" fill="#e3e1fc" font-size="8.5">Signup: Dashboard → Payments</text>
       <text x="1030" y="353" text-anchor="middle" fill="#e3e1fc" font-size="8.5">→ Setup Payment Provider (10 min)</text>
 
+      <!-- HotDoc App -->
+      <rect x="420" y="318" width="180" height="86" rx="12" fill="#17a05e" opacity="0.93"/>
+      <text x="510" y="341" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">HOTDOC PATIENT APP</text>
+      <text x="510" y="357" text-anchor="middle" fill="#d9f5e7" font-size="8.5">iOS App Store · Android Google Play</text>
+      <text x="510" y="371" text-anchor="middle" fill="#d9f5e7" font-size="8.5">book · reminders · check-in · queue</text>
+      <text x="510" y="383" text-anchor="middle" fill="#d9f5e7" font-size="8.5">cancel / reschedule · new patient form</text>
+      <text x="510" y="396" text-anchor="middle" fill="#d9f5e7" font-size="7.8">4 booking entries: clinic widget · HotDoc web · app · front desk</text>
+
       <!-- arrows -->
-      <line x1="130" y1="190" x2="183" y2="196" stroke="#555" stroke-width="1.6" marker-end="url(#ar)"/>
+      <line x1="130" y1="190" x2="183" y2="196" stroke="#55606a" stroke-width="1.6" marker-end="url(#ar)"/>
       <text x="156" y="184" text-anchor="middle" font-size="8" fill="#333">visits site</text>
 
       <line x1="350" y1="185" x2="418" y2="185" stroke="#17a05e" stroke-width="1.8" marker-end="url(#ar-g)"/>
@@ -175,14 +212,14 @@
       <line x1="855" y1="150" x2="928" y2="150" stroke="#d64541" stroke-width="1.8" marker-end="url(#ar-r)"/>
       <text x="891" y="141" text-anchor="middle" font-size="8" fill="#d64541" font-weight="700">terminal pairing</text>
 
-      <line x1="510" y1="308" x2="510" y2="292" stroke="#17a05e" stroke-width="1.8" marker-end="url(#ar-g)"/>
-      <text x="556" y="303" font-size="8" fill="#17a05e" font-weight="700">same platform</text>
-
       <line x1="600" y1="245" x2="928" y2="295" stroke="#635bff" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#ar-p)"/>
       <text x="765" y="258" text-anchor="middle" font-size="8" fill="#635bff" font-weight="700">payments (Stripe/Pin under the hood)</text>
 
       <line x1="130" y1="230" x2="928" y2="320" stroke="#999" stroke-width="1" stroke-dasharray="4,3"/>
       <text x="520" y="325" text-anchor="middle" font-size="7.5" fill="#888">patient adds card via HotDoc — data never touches website/Helix</text>
+
+      <line x1="510" y1="316" x2="510" y2="292" stroke="#17a05e" stroke-width="1.8" marker-end="url(#ar-g)"/>
+      <text x="556" y="311" font-size="8" fill="#17a05e" font-weight="700">same platform</text>
     </svg>
 
     <div class="legend">
@@ -197,24 +234,29 @@
   </div>
 
   <div class="note">
-    <b>Key principle:</b> Helix is the single source of truth. Practitioners, rosters and appointment types are configured in Helix → synced to HotDoc via cloud integration (access key delivered 1 Oct, installation complete 6 Oct) → the website displays HotDoc's booking UI via iframe. Change rosters in <b>Helix</b>, never in HotDoc.
+    <b>Key principle:</b> Helix is the single source of truth. Practitioners, rosters and appointment types are configured in <b>Helix</b> → synced to HotDoc via cloud integration (access key delivered 1 Oct, installation complete 6 Oct) → the website displays HotDoc's booking UI via iframe. Change rosters in <b>Helix</b>, never in HotDoc. Patients can book from <b>4 entries</b>: clinic website widget · HotDoc web directory · HotDoc app · front desk — all land in the same Helix appointment book.
   </div>
 </div>
 
 <!-- ============================ PAGE 2 : BOOKING FLOWS ============================ -->
-<div class="page">
-  <h1>Business Flows — Appointments &amp; Refunds</h1>
-  <div class="subtitle">Two booking phases (temp system → HotDoc) + payment &amp; refund paths</div>
+<div class="page" id="p2">
+  <div class="band">
+    <div>
+      <div class="t1">Business Flows — Appointments &amp; Refunds</div>
+      <div class="t2">Two booking phases (temp system → HotDoc) + payment &amp; refund paths</div>
+    </div>
+    <div class="chip">PAGE 2</div>
+  </div>
 
-  <h2>A. Booking flow — PHASE 1 (now → Helix go-live)</h2>
+  <h2>A. Booking flow — PHASE 1 <small>(now → Helix go-live)</small></h2>
   <div class="diagram">
     <svg viewBox="0 0 1160 150" width="100%">
       <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#8a6fc1"/></marker></defs>
-      <rect x="15"  y="45" width="150" height="55" rx="8" fill="#4a90d9"/><text x="90"  y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Patient books on</text><text x="90" y="82" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">website</text>
-      <rect x="215" y="45" width="170" height="55" rx="8" fill="#c79323"/><text x="300" y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">appointment.html</text><text x="300" y="82" text-anchor="middle" fill="#fff" font-size="10">temp booking form</text>
-      <rect x="435" y="45" width="185" height="55" rx="8" fill="#8a6fc1"/><text x="527" y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">booking.py (Render)</text><text x="527" y="82" text-anchor="middle" fill="#fff" font-size="10">slot check + confirm email</text>
-      <rect x="670" y="45" width="200" height="55" rx="8" fill="#0d3b4f"/><text x="770" y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Clinic notified</text><text x="770" y="82" text-anchor="middle" fill="#fff" font-size="10">Robin/clinic confirm manually</text>
-      <rect x="920" y="45" width="215" height="55" rx="8" fill="#fff" stroke="#0d3b4f" stroke-dasharray="4,3"/><text x="1027" y="68" text-anchor="middle" fill="#0d3b4f" font-size="10" font-weight="700">Helix</text><text x="1027" y="82" text-anchor="middle" fill="#666" font-size="9">entered manually at front desk after go-live</text>
+      <rect x="15"  y="45" width="150" height="55" rx="9" fill="#4a90d9"/><text x="90"  y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Patient books on</text><text x="90" y="82" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">website</text>
+      <rect x="215" y="45" width="170" height="55" rx="9" fill="#c79323"/><text x="300" y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">appointment.html</text><text x="300" y="82" text-anchor="middle" fill="#fff" font-size="10">temp booking form</text>
+      <rect x="435" y="45" width="185" height="55" rx="9" fill="#8a6fc1"/><text x="527" y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">booking.py (Render)</text><text x="527" y="82" text-anchor="middle" fill="#fff" font-size="10">slot check + confirm email</text>
+      <rect x="670" y="45" width="200" height="55" rx="9" fill="#0d3b4f"/><text x="770" y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Clinic notified</text><text x="770" y="82" text-anchor="middle" fill="#fff" font-size="10">Robin/clinic confirm manually</text>
+      <rect x="920" y="45" width="215" height="55" rx="9" fill="#fff" stroke="#0d3b4f" stroke-dasharray="4,3"/><text x="1027" y="68" text-anchor="middle" fill="#0d3b4f" font-size="10" font-weight="700">Helix</text><text x="1027" y="82" text-anchor="middle" fill="#666" font-size="9">entered manually at front desk after go-live</text>
       <line x1="165" y1="72" x2="213" y2="72" stroke="#8a6fc1" stroke-width="1.8" marker-end="url(#ar2)"/>
       <line x1="385" y1="72" x2="433" y2="72" stroke="#8a6fc1" stroke-width="1.8" marker-end="url(#ar2)"/>
       <line x1="620" y1="72" x2="668" y2="72" stroke="#8a6fc1" stroke-width="1.8" marker-end="url(#ar2)"/>
@@ -223,27 +265,27 @@
     </svg>
   </div>
 
-  <h2>B. Booking flow — PHASE 2 (from Helix go-live)</h2>
+  <h2>B. Booking flow — PHASE 2 <small>(from Helix go-live)</small></h2>
   <div class="diagram">
     <svg viewBox="0 0 1160 185" width="100%">
       <defs><marker id="ar3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#17a05e"/></marker><marker id="ar3b" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#635bff"/></marker></defs>
-      <rect x="15"  y="30" width="150" height="55" rx="8" fill="#4a90d9"/><text x="90"  y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Patient books on</text><text x="90" y="67" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">website</text>
-      <rect x="15"  y="108" width="150" height="55" rx="8" fill="#17a05e"/><text x="90" y="131" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Patient books in</text><text x="90" y="145" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">HotDoc App / website</text>
-      <rect x="215" y="30" width="170" height="55" rx="8" fill="#c79323"/><text x="300" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">HotDoc widget</text><text x="300" y="67" text-anchor="middle" fill="#fff" font-size="10">embedded in appointment.html</text>
-      <rect x="435" y="30" width="185" height="55" rx="8" fill="#17a05e"/><text x="527" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">HotDoc platform</text><text x="527" y="67" text-anchor="middle" fill="#fff" font-size="10">real-time slot lookup</text>
-      <rect x="670" y="30" width="200" height="55" rx="8" fill="#0d3b4f"/><text x="770" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Helix appointment book</text><text x="770" y="67" text-anchor="middle" fill="#fff" font-size="10">booking written automatically</text>
-      <rect x="920" y="30" width="215" height="55" rx="8" fill="#17a05e"/><text x="1027" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Confirmation to patient</text><text x="1027" y="67" text-anchor="middle" fill="#fff" font-size="10">email / SMS reminder (auto)</text>
+      <rect x="15"  y="30" width="150" height="55" rx="9" fill="#4a90d9"/><text x="90"  y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Patient books on</text><text x="90" y="67" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">website</text>
+      <rect x="215" y="30" width="170" height="55" rx="9" fill="#c79323"/><text x="300" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">HotDoc widget</text><text x="300" y="67" text-anchor="middle" fill="#fff" font-size="10">embedded in appointment.html</text>
+      <rect x="435" y="30" width="185" height="55" rx="9" fill="#17a05e"/><text x="527" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">HotDoc platform</text><text x="527" y="67" text-anchor="middle" fill="#fff" font-size="10">real-time slot lookup</text>
+      <rect x="670" y="30" width="200" height="55" rx="9" fill="#0d3b4f"/><text x="770" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Helix appointment book</text><text x="770" y="67" text-anchor="middle" fill="#fff" font-size="10">booking written automatically</text>
+      <rect x="920" y="30" width="215" height="55" rx="9" fill="#17a05e"/><text x="1027" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Confirmation to patient</text><text x="1027" y="67" text-anchor="middle" fill="#fff" font-size="10">email / SMS reminder (auto)</text>
       <line x1="165" y1="57" x2="213" y2="57" stroke="#17a05e" stroke-width="1.8" marker-end="url(#ar3)"/>
-      <path d="M 165 135 Q 320 155 480 88" stroke="#17a05e" stroke-width="1.6" fill="none" stroke-dasharray="4,3" marker-end="url(#ar3)"/>
-      <text x="255" y="152" font-size="8" fill="#17a05e">also lands on HotDoc platform</text>
       <line x1="385" y1="57" x2="433" y2="57" stroke="#17a05e" stroke-width="1.8" marker-end="url(#ar3)"/>
       <line x1="620" y1="57" x2="668" y2="57" stroke="#17a05e" stroke-width="1.8" marker-end="url(#ar3)"/>
       <line x1="870" y1="57" x2="918" y2="57" stroke="#17a05e" stroke-width="1.8" marker-end="url(#ar3)"/>
       <text x="560" y="112" text-anchor="middle" font-size="9" fill="#17a05e" font-weight="700">PHASE 2: real-time, automatic, zero manual work · requires Helix go-live (after UAT sign-off + training)</text>
       <!-- payment branch -->
-      <rect x="290" y="130" width="215" height="42" rx="8" fill="#635bff"/><text x="397" y="147" text-anchor="middle" fill="#fff" font-size="9.5" font-weight="700">Optional: deposit / prepay via</text><text x="397" y="161" text-anchor="middle" fill="#fff" font-size="9.5">HotDoc Payments → Stripe</text>
+      <rect x="290" y="130" width="215" height="42" rx="9" fill="#635bff"/><text x="397" y="147" text-anchor="middle" fill="#fff" font-size="9.5" font-weight="700">Optional: deposit / prepay via</text><text x="397" y="161" text-anchor="middle" fill="#fff" font-size="9.5">HotDoc Payments → Stripe</text>
       <line x1="527" y1="85" x2="510" y2="128" stroke="#635bff" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ar3b)"/>
       <text x="600" y="150" font-size="8.5" fill="#635bff">card data tokenised by Spreedly → Stripe charges → funds to clinic account · website never sees card data</text>
+      <!-- app entry branch -->
+      <rect x="15" y="108" width="150" height="42" rx="9" fill="#17a05e" opacity="0.92"/><text x="90" y="125" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">Also: HotDoc App /</text><text x="90" y="139" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">HotDoc web directory</text>
+      <path d="M 165 129 Q 320 155 480 88" stroke="#17a05e" stroke-width="1.6" fill="none" stroke-dasharray="4,3" marker-end="url(#ar3)"/>
     </svg>
   </div>
 
@@ -255,19 +297,24 @@
     <tr><td><b>Medicare rebate</b></td><td>Medicare → patient</td><td>In-clinic: Tyro Easyclaim (instant, ~11 s). Online-paid: clinic submits claim, rebate goes to patient's Medicare bank account</td><td>N/A (Medicare-side process)</td></tr>
     <tr><td><b>No-show / late cancel</b><br>(optional policy)</td><td>HotDoc Payments (pre-auth)</td><td>If enabled, funds pre-authorised (held) for chosen appointment types; clinic charges the held amount on no-show/late cancellation</td><td>Simply release (void) the pre-authorisation in HotDoc Dashboard — no money ever moved</td></tr>
   </table>
-  <div class="note"><b>Who can do what:</b> Helix billing/Tyro refunds — Omid (Practice Manager, OZ001). HotDoc Payments refunds &amp; settings — Robin or Andrew (Dashboard admins). Tyro terminal pairing — done with Tyro/Telstra at go-live.</div>
+  <div class="note"><b>Who can do what:</b> Helix billing/Tyro refunds — <b>Omid</b> (Practice Manager, OZ001). HotDoc Payments refunds &amp; settings — <b>Robin or Andrew</b> (Dashboard admins). Tyro terminal pairing — done with Tyro/Telstra at go-live.</div>
 </div>
 
-<!-- ============================ PAGE 3 : MARKETING + WHO-DOES-WHAT ============================ -->
-<div class="page">
-  <h1>Marketing Structure (Google) + System Ownership</h1>
-  <div class="subtitle">How patients find the clinic online · who owns which system</div>
+<!-- ============================ PAGE 3 : MARKETING + OWNERSHIP ============================ -->
+<div class="page" id="p3">
+  <div class="band">
+    <div>
+      <div class="t1">Marketing Structure (Google) + System Ownership</div>
+      <div class="t2">How patients find the clinic online · who owns which system</div>
+    </div>
+    <div class="chip">PAGE 3</div>
+  </div>
 
-  <h2>A. Google marketing structure — SEO (organic) vs SEM (paid ads)</h2>
+  <h2>A. Google marketing structure — SEO <small>(organic)</small> vs SEM <small>(paid ads)</small></h2>
   <div class="diagram">
     <svg viewBox="0 0 1160 285" width="100%">
       <defs><marker id="ar4" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ea8c00"/></marker></defs>
-      <rect x="15" y="110" width="170" height="70" rx="10" fill="#ea8c00"/>
+      <rect x="15" y="110" width="170" height="70" rx="12" fill="#ea8c00"/>
       <text x="100" y="138" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="700">GOOGLE</text>
       <text x="100" y="154" text-anchor="middle" fill="#fdeccd" font-size="8.5">Search / Maps</text>
 
@@ -288,7 +335,7 @@
       <text x="370" y="230" text-anchor="middle" font-size="8.5">✓ Daily budget ~$15–20 (skin cancer checks,</text>
       <text x="370" y="242" text-anchor="middle" font-size="8.5">&nbsp;&nbsp;&nbsp;laser, Drummoyne + inner west geo-target)</text>
 
-      <rect x="565" y="30" width="250" height="230" rx="10" fill="#c79323"/>
+      <rect x="565" y="30" width="250" height="230" rx="12" fill="#c79323"/>
       <text x="690" y="58" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">WEBSITE</text>
       <text x="690" y="74" text-anchor="middle" fill="#fff7e0" font-size="8.5">andrew-clinic.onrender.com</text>
       <line x1="585" y1="86" x2="795" y2="86" stroke="#fff7e0" stroke-width="0.6"/>
@@ -302,7 +349,7 @@
       <text x="690" y="214" text-anchor="middle" fill="#fff7e0" font-size="8.5">GBP profile links to website; website</text>
       <text x="690" y="226" text-anchor="middle" fill="#fff7e0" font-size="8.5">links back → SEO loop strengthens ranking</text>
 
-      <rect x="885" y="90" width="250" height="110" rx="10" fill="#4a90d9"/>
+      <rect x="885" y="90" width="250" height="110" rx="12" fill="#4a90d9"/>
       <text x="1010" y="118" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="700">PATIENT JOURNEY</text>
       <line x1="900" y1="130" x2="1120" y2="130" stroke="#dbeafd" stroke-width="0.6"/>
       <text x="1010" y="146" text-anchor="middle" fill="#fff" font-size="8.5">Searches "skin check drummoyne"</text>
@@ -330,7 +377,7 @@
     <tr><td><b>Website</b><br>SnailAI built</td><td>Clinic front door: services, doctors, booking entry, SEO</td><td>Render + GitHub (AndrewSkinClinic org); Andrew has Web Editor account for text/price edits</td><td><span class="tag t-now">LIVE</span> v3.12.x · bilingual · 34-URL SEO foundation · Google Ads verified</td><td>Widget embed at go-live; domain switch to skincancerlasercentre.com.au when ready</td></tr>
   </table>
 
-  <div class="footer-note">SnailAI.AI · prepared 11 Oct 2026 · v1.0 · contact: robin@snailai.ai · 0417 993 551 · This document is a working reference for Dr Andrew Li, Omid Zarbaft and SnailAI; details may change as vendors progress.</div>
+  <div class="footer-note"><span>SnailAI.AI · prepared 11 Oct 2026 · v1.1 · contact: robin@snailai.ai · 0417 993 551</span><span>Working reference for Dr Andrew Li, Omid Zarbaft &amp; SnailAI — details may change as vendors progress.</span></div>
 </div>
 
 </body>
